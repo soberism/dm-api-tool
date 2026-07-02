@@ -52,6 +52,7 @@ async function main() {
         method,
         path,
         output: readFlag(args, "--out") ?? config.output,
+        translateNames: config.translateNames,
       });
       console.log(`Generated ${result.count} API file: ${result.file}`);
       return;
@@ -62,6 +63,7 @@ async function main() {
       const spec = await fetchSpec(config);
       const result = await generateAll(spec, {
         output: readFlag(args, "--out") ?? config.output,
+        translateNames: config.translateNames,
       });
       console.log(`Generated ${result.count} API files in ${result.dir}`);
       return;

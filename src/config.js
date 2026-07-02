@@ -48,5 +48,6 @@ export async function loadConfig() {
     input: config.input,
     output: config.output ?? "dm-api",
     headers: config.headers ?? {},
+    translateNames: config.translateNames ?? defaultConfig.translateNames,
   };
 }

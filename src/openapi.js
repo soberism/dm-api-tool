@@ -1,57 +1,7 @@
-const METHOD_ORDER = ["get", "post", "put", "patch", "delete", "head", "options"];
+import { translate } from "@vitalets/google-translate-api";
 
-const CHINESE_WORDS = [
-  ["辅助", "assist"],
-  ["修改", "modify"],
-  ["预测", "forecast"],
-  ["曲线", "curve"],
-  ["负荷", "load"],
-  ["查询", "query"],
-  ["分页", "page"],
-  ["操作", "operation"],
-  ["日志", "log"],
-  ["编辑", "update"],
-  ["角色", "role"],
-  ["名称", "name"],
-  ["描述", "description"],
-  ["状态", "status"],
-  ["权限", "permission"],
-  ["用户", "user"],
-  ["中心", "center"],
-  ["新增", "create"],
-  ["创建", "create"],
-  ["删除", "delete"],
-  ["导出", "export"],
-  ["导入", "import"],
-  ["详情", "detail"],
-  ["列表", "list"],
-  ["获取", "get"],
-  ["保存", "save"],
-  ["更新", "update"],
-  ["上传", "upload"],
-  ["下载", "download"],
-  ["启用", "enable"],
-  ["禁用", "disable"],
-  ["登录", "login"],
-  ["退出", "logout"],
-  ["文件", "file"],
-  ["数据", "data"],
-  ["结果", "result"],
-  ["时间", "time"],
-  ["范围", "range"],
-  ["模块", "module"],
-  ["类型", "type"],
-  ["业务", "business"],
-  ["对象", "object"],
-  ["审批", "approval"],
-  ["单号", "no"],
-  ["运行", "run"],
-  ["批次", "batch"],
-  ["点位", "point"],
-  ["参数", "params"],
-  ["请求", "request"],
-  ["响应", "response"],
-].sort((a, b) => b[0].length - a[0].length);
+const METHOD_ORDER = ["get", "post", "put", "patch", "delete", "head", "options"];
+const translationCache = new Map();
 
 export function getOperation(spec, path, method) {
   const pathItem = spec.paths?.[path];
@@ -90,20 +40,26 @@ export function listOperations(spec) {
 }
 
 export function operationName(method, path, operation) {
-  if (operation.summary) {
-    return toIdentifier(operation.summary);
-  }
-  if (operation.description) {
-    return toIdentifier(operation.description);
-  }
   if (operation.operationId) {
     return toIdentifier(operation.operationId);
   }
   return toIdentifier(`${method}_${path}`);
 }
 
-export function filePathForOperation(path, method, operation) {
-  const name = operationName(method, path, operation);
+export async function resolveOperationName(method, path, operation, options = {}) {
+  if (operation.summary) {
+    const name = await translatedIdentifier(operation.summary, options);
+    if (name !== "api") return name;
+  }
+  if (operation.description) {
+    const name = await translatedIdentifier(operation.description, options);
+    if (name !== "api") return name;
+  }
+  return operationName(method, path, operation);
+}
+
+export async function filePathForOperation(path, method, operation) {
+  const name = await resolveOperationName(method, path, operation);
   return `${name}.ts`;
 }
 
@@ -240,8 +196,7 @@ export function parametersByLocation(operation, location) {
 }
 
 export function toIdentifier(value) {
-  const normalizedValue = translateChineseWords(String(value));
-  const words = normalizedValue
+  const words = String(value)
     .replace(/[{}]/g, "")
     .normalize("NFKC")
     .split(/[^a-zA-Z0-9_$]+/)
@@ -264,26 +219,27 @@ function formatIdentifierWord(word, index) {
   return word;
 }
 
-function translateChineseWords(value) {
-  if (!/[\u3400-\u9fff]/.test(value)) return value;
+async function translatedIdentifier(value, options = {}) {
+  const text = String(value);
+  if (!hasChinese(text)) return toIdentifier(text);
+  if (!options.translateNames) return "api";
 
-  let result = "";
-  let index = 0;
-  while (index < value.length) {
-    const rest = value.slice(index);
-    const match = CHINESE_WORDS.find(([word]) => rest.startsWith(word));
-    if (match) {
-      result += ` ${match[1]} `;
-      index += match[0].length;
-      continue;
-    }
-
-    const char = value[index];
-    result += /[\u3400-\u9fff]/.test(char) ? " " : char;
-    index += 1;
+  if (translationCache.has(text)) {
+    return toIdentifier(translationCache.get(text));
   }
 
-  return result;
+  try {
+    const result = await translate(text, { from: "zh-CN", to: "en" });
+    const translatedText = result?.text ?? "";
+    translationCache.set(text, translatedText);
+    return toIdentifier(translatedText);
+  } catch {
+    return "api";
+  }
+}
+
+function hasChinese(value) {
+  return /[\u3400-\u9fff]/.test(value);
 }
 
 function refName(ref) {

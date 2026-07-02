@@ -2,14 +2,13 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import {
   collectRefs,
-  filePathForOperation,
   getOperation,
   isObjectLikeSchema,
   listOperations,
-  operationName,
   parametersByLocation,
   parametersSchema,
   renderReferencedTypes,
+  resolveOperationName,
   requestBodySchema,
   responseSchema,
   renderJsDoc,
@@ -22,9 +21,12 @@ export async function generateOne(spec, options) {
   const outputDir = resolve(process.cwd(), options.output);
   await mkdir(outputDir, { recursive: true });
 
-  const fileName = filePathForOperation(options.path, method, operation);
+  const name = await resolveOperationName(method, options.path, operation, {
+    translateNames: options.translateNames,
+  });
+  const fileName = `${name}.ts`;
   const file = join(outputDir, fileName);
-  await writeFile(file, renderOperation(spec, options.path, method, operation), "utf8");
+  await writeFile(file, renderOperation(spec, options.path, method, operation, name), "utf8");
 
   return { count: 1, file };
 }
@@ -35,15 +37,17 @@ export async function generateAll(spec, options) {
 
   const operations = listOperations(spec);
   for (const item of operations) {
-    const file = join(outputDir, filePathForOperation(item.path, item.method, item.operation));
-    await writeFile(file, renderOperation(spec, item.path, item.method, item.operation), "utf8");
+    const name = await resolveOperationName(item.method, item.path, item.operation, {
+      translateNames: options.translateNames,
+    });
+    const file = join(outputDir, `${name}.ts`);
+    await writeFile(file, renderOperation(spec, item.path, item.method, item.operation, name), "utf8");
   }
 
   return { count: operations.length, dir: outputDir };
 }
 
-function renderOperation(spec, path, method, operation) {
-  const name = operationName(method, path, operation);
+function renderOperation(spec, path, method, operation, name) {
   const typePrefix = toTypeName(name);
   const paramsSchema = parametersSchema(operation, ["path", "query"], spec);
   const bodySchema = requestBodySchema(operation);

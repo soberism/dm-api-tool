@@ -77,11 +77,14 @@ type ApiRequestMethod<TResult = unknown> = (
 {
   "input": "https://example.com/swagger-ui/index.html",
   "output": "dm-api",
-  "headers": {}
+  "headers": {},
+  "translateNames": false
 }
 ```
 
 `input` can be an OpenAPI JSON URL, a Swagger UI URL, or a local JSON file. Generated files are written to `dm-api` by default, relative to the directory where the command is executed. If `dm.config.json` is missing, the CLI uses its built-in default config.
+
+Set `translateNames` to `true` to translate Chinese API summaries/descriptions into English function and file names. This uses an online translation service, so keep it disabled if your Swagger descriptions contain sensitive internal data.
 
 ## Notes
 
