@@ -137,7 +137,7 @@ ${queryBlock}${payloadBlock}  const url = query ? \`\${pathname}?\${query}\` : p
 function renderRequestMethodType() {
   return `export type ApiRequestMethod<TResult = unknown> = (
   url: string,
-  data?: Record<string, unknown> | string | unknown,
+  data?: any,
 ) => Promise<TResult>;`;
 }
 

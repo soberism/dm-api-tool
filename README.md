@@ -60,7 +60,7 @@ The request method only needs to match this shape:
 ```ts
 type ApiRequestMethod<TResult = unknown> = (
   url: string,
-  data?: Record<string, unknown> | string | unknown,
+  data?: any,
 ) => Promise<TResult>;
 ```
 
