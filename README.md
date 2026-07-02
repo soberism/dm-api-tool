@@ -44,26 +44,25 @@ Generate all APIs:
 dm all
 ```
 
-Generated API functions receive a request engine as the first argument, so they can use your project's own HTTP layer instead of `fetch`:
+Generated API functions receive a request method as the first argument, so they can use your project's own HTTP layer instead of `fetch`:
 
 ```ts
 import { update2 } from "./dm-api/update2";
 
-const result = await update2(request, {
+const result = await update2(request.post, {
   id: 1,
   roleName: "Admin"
 });
 ```
 
-The request engine only needs to match this shape:
+The request method only needs to match this shape:
 
 ```ts
-type ApiRequest = <TResult = unknown, TBody = unknown>(options: {
-  method: string;
-  url: string;
-  headers?: Record<string, string>;
-  body?: TBody;
-}) => Promise<TResult>;
+type ApiRequestMethod<TResult = unknown> = (
+  url: string,
+  data?: Record<string, unknown> | string | unknown,
+  headers?: HeadersInit,
+) => Promise<TResult>;
 ```
 
 ## Config
