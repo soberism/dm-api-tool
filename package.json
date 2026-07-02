@@ -1,0 +1,27 @@
+{
+  "name": "dm-api-tool",
+  "version": "0.1.0",
+  "description": "Generate focused TypeScript API files from Swagger/OpenAPI specs.",
+  "type": "module",
+  "bin": {
+    "dm": "./src/cli.js"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "check": "node --check src/cli.js && node --check src/config.js && node --check src/default-config.js && node --check src/fetch-spec.js && node --check src/generate.js && node --check src/openapi.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "openapi",
+    "swagger",
+    "typescript",
+    "cli",
+    "api"
+  ],
+  "license": "MIT"
+}
