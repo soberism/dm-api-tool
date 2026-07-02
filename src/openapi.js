@@ -37,6 +37,12 @@ export function listOperations(spec) {
 }
 
 export function operationName(method, path, operation) {
+  if (operation.summary) {
+    return toIdentifier(operation.summary);
+  }
+  if (operation.description) {
+    return toIdentifier(operation.description);
+  }
   if (operation.operationId) {
     return toIdentifier(operation.operationId);
   }
@@ -183,20 +189,25 @@ export function parametersByLocation(operation, location) {
 export function toIdentifier(value) {
   const words = String(value)
     .replace(/[{}]/g, "")
-    .split(/[^a-zA-Z0-9]+/)
+    .normalize("NFKC")
+    .split(/[^\p{L}\p{N}_$]+/u)
     .filter(Boolean);
-  const name = words
-    .map((word, index) => {
-      const lower = word.charAt(0).toLowerCase() + word.slice(1);
-      return index === 0 ? lower : lower.charAt(0).toUpperCase() + lower.slice(1);
-    })
-    .join("");
-  return /^[a-zA-Z_$]/.test(name) ? name : `api${name}`;
+  const name = words.map((word, index) => formatIdentifierWord(word, index)).join("");
+  if (!name) return "api";
+  return /^[\p{L}_$]/u.test(name) ? name : `api${name}`;
 }
 
 export function toTypeName(value) {
   const id = toIdentifier(value);
   return id.charAt(0).toUpperCase() + id.slice(1);
+}
+
+function formatIdentifierWord(word, index) {
+  if (/^[a-zA-Z][a-zA-Z0-9_$]*$/.test(word)) {
+    const lower = word.charAt(0).toLowerCase() + word.slice(1);
+    return index === 0 ? lower : lower.charAt(0).toUpperCase() + lower.slice(1);
+  }
+  return word;
 }
 
 function refName(ref) {
