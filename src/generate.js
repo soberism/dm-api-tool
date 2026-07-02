@@ -122,7 +122,7 @@ function renderFetchFunction({
     queryObjectParam,
     delegatesQueryParams,
   });
-  const payload = renderPayloadExpression({ hasBody, delegatesQueryParams });
+  const payload = renderPayloadExpression({ hasBody, delegatesQueryParams, queryObjectParam });
 
   const doc = renderOperationDoc(operation, method, path);
 
@@ -130,7 +130,7 @@ function renderFetchFunction({
 export async function ${name}<TResult = ${typePrefix}Result>(${args.join(", ")}): Promise<TResult> {
   const pathname = ${pathTemplate};
 ${queryBlock}${payloadBlock}  const url = query ? \`\${pathname}?\${query}\` : pathname;
-  return request(url, ${payload}, { "Content-Type": "application/json" });
+  return request(url, ${payload});
 }`;
 }
 
@@ -138,7 +138,6 @@ function renderRequestMethodType() {
   return `export type ApiRequestMethod<TResult = unknown> = (
   url: string,
   data?: Record<string, unknown> | string | unknown,
-  headers?: HeadersInit,
 ) => Promise<TResult>;`;
 }
 
@@ -202,7 +201,7 @@ function renderQueryBlock(queryParams, queryObjectParam, delegatesQueryParams) {
 
 function renderPayloadBlock({ hasParams, hasBody, queryParams, queryObjectParam, delegatesQueryParams }) {
   if (hasBody || !hasParams || !delegatesQueryParams) return "";
-  if (queryObjectParam) return "  const requestData = params;\n";
+  if (queryObjectParam) return "";
 
   const entries = queryParams.map((param) => `    ${JSON.stringify(param.name)}: params[${JSON.stringify(param.name)}],`);
   return `  const requestData = {
@@ -211,8 +210,9 @@ ${entries.join("\n")}
 `;
 }
 
-function renderPayloadExpression({ hasBody, delegatesQueryParams }) {
+function renderPayloadExpression({ hasBody, delegatesQueryParams, queryObjectParam }) {
   if (hasBody) return "body";
+  if (delegatesQueryParams && queryObjectParam) return "params";
   if (delegatesQueryParams) return "requestData";
   return "undefined";
 }

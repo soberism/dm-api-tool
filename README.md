@@ -61,7 +61,6 @@ The request method only needs to match this shape:
 type ApiRequestMethod<TResult = unknown> = (
   url: string,
   data?: Record<string, unknown> | string | unknown,
-  headers?: HeadersInit,
 ) => Promise<TResult>;
 ```
 
