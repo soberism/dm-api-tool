@@ -111,6 +111,7 @@ function renderFetchFunction({
   args.push(`request: ApiRequestMethod<TResult>`);
   if (hasParams) args.push(`params: ${typePrefix}Params`);
   if (hasBody) args.push(`body?: ${typePrefix}Body`);
+  args.push("headers?: HeadersInit");
 
   const delegatesQueryParams = (method === "get" || method === "delete") && queryParams.length > 0;
   const pathTemplate = renderPathTemplate(path, pathParams);
@@ -130,7 +131,7 @@ function renderFetchFunction({
 export async function ${name}<TResult = ${typePrefix}Result>(${args.join(", ")}): Promise<TResult> {
   const pathname = ${pathTemplate};
 ${queryBlock}${payloadBlock}  const url = query ? \`\${pathname}?\${query}\` : pathname;
-  return request(url, ${payload});
+  return request(url, ${payload}, headers);
 }`;
 }
 
@@ -138,6 +139,7 @@ function renderRequestMethodType() {
   return `export type ApiRequestMethod<TResult = unknown> = (
   url: string,
   data?: any,
+  headers?: HeadersInit,
 ) => Promise<TResult>;`;
 }
 

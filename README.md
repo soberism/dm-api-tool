@@ -53,6 +53,10 @@ const result = await update2(request.post, {
   id: 1,
   roleName: "Admin"
 });
+
+const resultWithHeaders = await update2(request.post, body, {
+  Authorization: "Bearer token"
+});
 ```
 
 The request method only needs to match this shape:
@@ -61,6 +65,7 @@ The request method only needs to match this shape:
 type ApiRequestMethod<TResult = unknown> = (
   url: string,
   data?: any,
+  headers?: HeadersInit,
 ) => Promise<TResult>;
 ```
 

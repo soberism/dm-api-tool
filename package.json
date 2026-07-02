@@ -1,6 +1,6 @@
 {
   "name": "dm-api-tool",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Generate focused TypeScript API files from Swagger/OpenAPI specs.",
   "type": "module",
   "bin": {
