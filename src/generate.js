@@ -71,6 +71,8 @@ function renderOperation(spec, path, method, operation) {
     blocks.push(referencedTypes, "");
   }
 
+  blocks.push(renderRequestEngineType());
+  blocks.push("");
   blocks.push(renderNamedType(`${typePrefix}Params`, paramsSchema, spec, "Request params"));
   blocks.push(renderNamedType(`${typePrefix}Body`, bodySchema, spec, "Request body"));
   blocks.push(renderNamedType(`${typePrefix}Result`, resultSchema, spec, "Response data"));
@@ -106,13 +108,14 @@ function renderFetchFunction({
   operation,
 }) {
   const args = [];
+  args.push(`request: ApiRequest`);
   if (hasParams) args.push(`params: ${typePrefix}Params`);
   if (hasBody) args.push(`body?: ${typePrefix}Body`);
 
   const pathTemplate = renderPathTemplate(path, pathParams);
   const queryBlock = renderQueryBlock(queryParams, queryObjectParam);
   const bodyBlock = hasBody
-    ? `    body: body === undefined ? undefined : JSON.stringify(body),\n`
+    ? `    body,\n`
     : "";
 
   const doc = renderOperationDoc(operation, method, path);
@@ -121,17 +124,25 @@ function renderFetchFunction({
 export async function ${name}(${args.join(", ")}): Promise<${typePrefix}Result> {
   const pathname = ${pathTemplate};
 ${queryBlock}  const url = query ? \`\${pathname}?\${query}\` : pathname;
-  const response = await fetch(url, {
+  return request<${typePrefix}Result>({
     method: "${method.toUpperCase()}",
+    url,
     headers: { "Content-Type": "application/json" },
 ${bodyBlock}  });
-
-  if (!response.ok) {
-    throw new Error(\`${method.toUpperCase()} ${path} failed: \${response.status}\`);
-  }
-
-  return response.json() as Promise<${typePrefix}Result>;
 }`;
+}
+
+function renderRequestEngineType() {
+  return `export type ApiRequestOptions<TBody = unknown> = {
+  method: string;
+  url: string;
+  headers?: Record<string, string>;
+  body?: TBody;
+};
+
+export type ApiRequest = <TResult = unknown, TBody = unknown>(
+  options: ApiRequestOptions<TBody>,
+) => Promise<TResult>;`;
 }
 
 function renderNamedType(name, schema, spec, fallback) {
